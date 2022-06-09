@@ -80,30 +80,29 @@ router.post('/all', async (req,res) =>{
 // })
 
 router.put("/:id", async (req, res) => {
-    const result = await Todo.findByIdAndUpdate(
-      { _id: req.params.id },
-      {
-        $set: {
-          status: "active",
-        },
-      },
-      {
-        new: true,
-        useFindAndModify: false,
-      },
-      (err) => {
-        if (err) {
-          res.status(500).json({
-            error: "There was a server side error!",
-          });
-        } else {
+    try{
+        const result = await Todo.findByIdAndUpdate(
+            { _id: req.params.id },
+            {
+              $set: {
+                status: "active",
+              },
+            },
+            {
+              new: true,
+              useFindAndModify: false,
+            },
+          );
           res.status(200).json({
-            message: "Todo was updated successfully!",
+              message: "Todo was updated successfully!",
           });
-        }
-      }
-    );
-    console.log(result);
+          console.log(result);
+    }catch(e){
+        res.status(500).json({
+            error: "There was a server side error!",
+        });
+    }
+    
   });
 
 router.delete('/:id', async (req,res) =>{
