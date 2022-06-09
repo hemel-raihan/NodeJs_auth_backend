@@ -153,10 +153,21 @@ router.put("/:id", async (req, res) => {
     
   })
 
-
+// delete todo
 
 router.delete('/:id', async (req,res) =>{
-
+  await Todo.deleteOne({_id: req.params.id}, (err) =>{
+    if(err){
+      res.status(500).json({
+        error: "there was a server side erro!!"
+      })
+    }
+    else{
+      res.status(200).json({
+        message: "successfully delete todo"
+      })
+    }
+  })
 })
 
 module.exports = router;
