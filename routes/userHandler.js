@@ -2,6 +2,7 @@ const router = require('express').Router()
 const User = require('../models/user')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const checkLogin = require('../middleware/checkLogin')
 
 router.post('/register', async (req,res) =>{
     const salt = await bcrypt.genSalt(10)
@@ -18,34 +19,60 @@ router.post('/register', async (req,res) =>{
 })
 
 router.post('/login', async (req,res) =>{
-    const user = await User.findOne({email: req.body.email})
 
-    if(!user){
-        return res.status(404).send({
-            message: 'user not found'
+    try{
+        const user = await User.findOne({email: req.body.email})
+
+        if(!user){
+            return res.status(404).send({
+                message: 'user not found'
+            })
+        }
+    
+        if(!await bcrypt.compare(req.body.password, user.password))
+        {
+            return res.status(404).send({
+                message: 'invalid credentials'
+            })
+        }
+    
+        // this is for store token in cookie
+    
+        const token = jwt.sign({_id: user._id}, "secret")
+    
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            maxAge: 24*60*60*1000 //1 day
         })
-    }
+    
+        res.send({
+            message: 'success'
+        });
+    
+    
+    
+        // this is for store token in access token and for the client side localstorage/sessionstorage
+    
+        // const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {
+        //     expiresIn: '1h'
+        // })
+    
+        // res.status(200).json({
+        //     "access_token": token,
+        //     "message": 'Login Successfully'
+        // })
 
-    if(!await bcrypt.compare(req.body.password, user.password))
-    {
+
+    }catch(e){
         return res.status(404).send({
             message: 'invalid credentials'
         })
     }
+    
 
-    const token = jwt.sign({_id: user._id}, "secret")
-
-    res.cookie('jwt', token, {
-        httpOnly: true,
-        maxAge: 24*60*60*1000 //1 day
-    })
-
-    res.send({
-        message: 'success'
-    });
 })
 
-router.get('/user', async(req,res) =>{
+router.get('/user', checkLogin, async(req,res) =>{
     try{
         const cookie = req.cookies['jwt']
 
@@ -62,7 +89,8 @@ router.get('/user', async(req,res) =>{
         const {password, ...data} = await user.toJSON()
     
         res.send(data)
-    }catch(e){
+    }
+    catch(e){
         return res.status(401).send({
             message: 'unauthenticated!'
         })
