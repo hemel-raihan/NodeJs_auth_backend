@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const router = express.Router()
 const todoSchema = require('../schema/todoSchema')
 const Todo = new mongoose.model("Todo", todoSchema)
+const checkLogin = require('../middleware/checkLogin')
 
 //get all todo
 
@@ -23,14 +24,15 @@ const Todo = new mongoose.model("Todo", todoSchema)
 //     })
 // })
 
-router.get("/", async (req, res) => {
-    await Todo.find({ status: "active" })
+router.get("/", checkLogin, async (req, res) => {
+    await Todo.find({})
+      .populate('user')
       .select({
         _id: 0,
         __v: 0,
         date: 0,
       })
-      .limit(2)
+      .limit(3)
       .exec((err, data) => {
         if (err) {
           res.status(500).json({
@@ -47,7 +49,7 @@ router.get("/", async (req, res) => {
 
 //get single todo
 
-router.get('/:id', async (req,res) =>{
+router.get('/:id', checkLogin, async (req,res) =>{
     Todo.find({_id: req.params.id}, (err,data)=>{
     if(err)
     {
@@ -66,21 +68,36 @@ router.get('/:id', async (req,res) =>{
 
 // insert a todo
 
-router.post('/', async (req,res) =>{
-    const newTodo = new Todo(req.body)
-    await newTodo.save((err)=>{
-        if(err){
-            res.status(500).json({
-                error: "there was a server side errror!!"
-            })
-        }
-        else{
-            res.status(200).json({
-                message: "Todo Insert successfully!",
-                newTodo
-            })
-        }
+router.post('/', checkLogin, async (req,res) =>{
+    const newTodo = new Todo({
+      ...req.body,
+      user: req._id
     })
+    try{
+      await newTodo.save();
+      res.status(200).json({
+          message: "Todo Insert successfully!",
+          newTodo
+      })
+    }catch(e){
+      res.status(500).json({
+          error: "there was a server side errror!!"
+      })
+    }
+    
+    // await newTodo.save((err)=>{
+    //     if(err){
+    //         res.status(500).json({
+    //             error: "there was a server side errror!!"
+    //         })
+    //     }
+    //     else{
+    //         res.status(200).json({
+    //             message: "Todo Insert successfully!",
+    //             newTodo
+    //         })
+    //     }
+    // })
 })
 
 //insert multiple data

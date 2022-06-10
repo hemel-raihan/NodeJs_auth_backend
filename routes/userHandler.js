@@ -38,29 +38,29 @@ router.post('/login', async (req,res) =>{
     
         // this is for store token in cookie
     
-        const token = jwt.sign({_id: user._id}, "secret")
+        // const token = jwt.sign({_id: user._id}, "secret")
     
-        res.cookie('jwt', token, {
-            httpOnly: true,
-            maxAge: 24*60*60*1000 //1 day
-        })
+        // res.cookie('jwt', token, {
+        //     httpOnly: true,
+        //     maxAge: 24*60*60*1000 //1 day
+        // })
     
-        res.send({
-            message: 'success'
-        });
+        // res.send({
+        //     message: 'success'
+        // });
     
     
     
         // this is for store token in access token and for the client side localstorage/sessionstorage
     
-        // const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {
-        //     expiresIn: '1h'
-        // })
+        const token = jwt.sign({_id: user._id, name: user.name}, "secret", {
+            expiresIn: '1h'
+        })
     
-        // res.status(200).json({
-        //     "access_token": token,
-        //     "message": 'Login Successfully'
-        // })
+        res.status(200).json({
+            "access_token": token,
+            "message": 'Login Successfully'
+        })
 
 
     }catch(e){
